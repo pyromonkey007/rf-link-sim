@@ -1,0 +1,99 @@
+% Sample high-resolution DEM data in CSV format
+% This is a pre-generated sample with varying resolution
+% Format: [latitude, longitude, elevation_meters]
+
+% Create a simple grid-based DEM with varying resolution
+% Central area has higher resolution (3m) while outer areas have lower resolution (30m)
+
+% Define area parameters
+center_lat = 37.5;
+center_lon = -122.2;
+dem_data = [];
+
+% Create high-resolution central area (3m resolution, ~0.0001 degrees)
+fprintf('Creating high-resolution central area...\n');
+for lat = 37.45:0.0001:37.55
+    for lon = -122.25:0.0001:-122.15
+        % Calculate distance from center
+        dist = sqrt((lat-center_lat)^2 + (lon-center_lon)^2);
+        
+        % Generate elevation with a central mountain and some hills
+        elev = 100;  % Base elevation
+        
+        % Central mountain
+        mountain_factor = max(0, 1 - dist/0.05);
+        elev = elev + 1000 * mountain_factor^2;
+        
+        % Add some hills
+        hill1_dist = sqrt((lat-37.48)^2 + (lon+122.18)^2);
+        hill1_factor = max(0, 1 - hill1_dist/0.02);
+        elev = elev + 300 * hill1_factor^2;
+        
+        hill2_dist = sqrt((lat-37.52)^2 + (lon+122.22)^2);
+        hill2_factor = max(0, 1 - hill2_dist/0.015);
+        elev = elev + 250 * hill2_factor^2;
+        
+        % Add some noise
+        elev = elev + 10 * (rand() - 0.5);
+        
+        % Add to dataset
+        dem_data = [dem_data; lat, lon, elev];
+    end
+end
+
+% Create lower-resolution outer areas (30m resolution, ~0.001 degrees)
+fprintf('Creating lower-resolution outer areas...\n');
+for lat = 37.3:0.001:37.45
+    for lon = -122.3:0.001:-122.1
+        % Calculate distance from center
+        dist = sqrt((lat-center_lat)^2 + (lon-center_lon)^2);
+        
+        % Generate elevation with some hills
+        elev = 50;  % Base elevation
+        
+        % Add some hills
+        hill1_dist = sqrt((lat-37.35)^2 + (lon+122.25)^2);
+        hill1_factor = max(0, 1 - hill1_dist/0.05);
+        elev = elev + 200 * hill1_factor^2;
+        
+        hill2_dist = sqrt((lat-37.4)^2 + (lon+122.15)^2);
+        hill2_factor = max(0, 1 - hill2_dist/0.04);
+        elev = elev + 150 * hill2_factor^2;
+        
+        % Add some noise
+        elev = elev + 5 * (rand() - 0.5);
+        
+        % Add to dataset
+        dem_data = [dem_data; lat, lon, elev];
+    end
+end
+
+for lat = 37.55:0.001:37.7
+    for lon = -122.3:0.001:-122.1
+        % Calculate distance from center
+        dist = sqrt((lat-center_lat)^2 + (lon-center_lon)^2);
+        
+        % Generate elevation with some hills
+        elev = 50;  % Base elevation
+        
+        % Add some hills
+        hill1_dist = sqrt((lat-37.65)^2 + (lon+122.25)^2);
+        hill1_factor = max(0, 1 - hill1_dist/0.05);
+        elev = elev + 200 * hill1_factor^2;
+        
+        hill2_dist = sqrt((lat-37.6)^2 + (lon+122.15)^2);
+        hill2_factor = max(0, 1 - hill2_dist/0.04);
+        elev = elev + 150 * hill2_factor^2;
+        
+        % Add some noise
+        elev = elev + 5 * (rand() - 0.5);
+        
+        % Add to dataset
+        dem_data = [dem_data; lat, lon, elev];
+    end
+end
+
+% Save to CSV file
+fprintf('Saving %d data points to high_res_dem.csv...\n', size(dem_data, 1));
+dlmwrite('data/terrain/high_res_dem.csv', dem_data, 'delimiter', ',', 'precision', 6);
+fprintf('Sample high-resolution DEM data created successfully.\n');

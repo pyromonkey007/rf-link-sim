@@ -1,0 +1,32 @@
+% Sample C-band antenna pattern
+% Format: [azimuth x elevation] grid of distances in NM
+% Each value represents the distance at which the signal reaches the sensitivity threshold
+% Higher values = better gain in that direction
+% 
+% Azimuth: 0-359 degrees (columns)
+% Elevation: -90 to +90 degrees (rows)
+% 
+% This is a simplified pattern for testing purposes
+
+% Create a 181x360 matrix (elevation x azimuth)
+pattern = zeros(181, 360);
+
+% Fill with a basic pattern - higher values in forward direction
+for el = 1:181  % -90 to +90 degrees
+    for az = 1:360  % 0 to 359 degrees
+        % Base distance
+        base_dist = 100;
+        
+        % Elevation factor - best at horizon (el = 91)
+        el_factor = 1 - 0.7 * abs(el - 91) / 90;
+        
+        % Azimuth factor - best at front (az = 1)
+        az_factor = 1 - 0.5 * min(abs(az - 1), abs(az - 361)) / 180;
+        
+        % Combine factors
+        pattern(el, az) = base_dist * el_factor * az_factor;
+    end
+end
+
+% Save to CSV
+csvwrite('c_band_pattern.csv', pattern);

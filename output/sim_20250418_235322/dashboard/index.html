@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cyberpunk RF Link Dashboard</title>
+  <link rel="stylesheet" href="dashboard_style.css">
+</head>
+<body>
+  <h1 id="title">CYBERPUNK RF LINK SIMULATION DASHBOARD</h1>
+
+  <div class="section">
+    <h2>Simulation Outputs</h2>
+    <ul>
+      <li><a href="TSPI_export.csv" download>Download TSPI Data (CSV)</a></li>
+      <li><a href="waypoints_times.csv" download>Download Waypoint Arrival Times (CSV)</a></li>
+      <li><a href="RF_log.csv" download>Download RF Log (CSV)</a></li>
+      <li><a href="config_flags.html">View Config Flags</a></li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>Snapshot Gallery</h2>
+    <div id="snapshotGallery">
+      <!-- Thumbnails appended by plot_viewer.js -->
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Time-Space-Position Chart</h2>
+    <iframe src="tspi_plot.html" class="plotFrame"></iframe>
+  </div>
+
+  <div class="section">
+    <h2>RF Timeline Chart</h2>
+    <iframe src="rf_plot.html" class="plotFrame"></iframe>
+  </div>
+
+  <script src="plot_viewer.js"></script>
+  <script>
+    // Initialize snapshot gallery
+    const snapshots = [
+      // If you have specific snapshot filenames, e.g. "snapshot_0s.png", "snapshot_30s.png", etc., place them here:
+      "snapshots/snapshot_0.0s.png",
+      "snapshots/snapshot_30.0s.png",
+      "snapshots/snapshot_60.0s.png"
+      // ... add more
+    ];
+    loadSnapshots(snapshots);
+  </script>
+</body>
+</html>

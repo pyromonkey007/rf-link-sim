@@ -1,0 +1,20 @@
+% Sample aircraft wireframe model
+% Format: [x, y] coordinates in body frame
+% x = forward, y = right, z = down
+% Units: meters
+
+% Create a simple aircraft wireframe
+wireframe = [
+    -10,   0;    % tail
+     -5,   5;    % right wing root
+      0,   7.5;  % right wingtip
+      5,   5;    % right wing leading edge
+     10,   0;    % nose
+      5,  -5;    % left wing leading edge
+      0,  -7.5;  % left wingtip
+     -5,  -5;    % left wing root
+    -10,   0;    % back to tail (closed polygon)
+];
+
+% Save to CSV
+csvwrite('aircraft_wireframe.csv', wireframe);
