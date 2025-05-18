@@ -463,6 +463,7 @@ function visualization_model(config, tspi_data, processed_rf_data, terrain, simu
                  end %
                  h_plot = plot(figs_rf.(['ax' plot_tag]), time, link_data.received_power_dbm, plot_styles{1:2}, 'Color', current_line_color); % Plot data %
                  lgd_handles.(plot_tag).h(end+1) = h_plot; lgd_handles.(plot_tag).l{end+1} = link_label; % Store handle/label %
+                 ylim([-100 inf]);
                  % Plot sensitivity line for this receiver (only once per unique Rx)
                  sens_label = sprintf('%s Sens.', rx_id); %
                  if ~ismember(sens_label, lgd_handles.(plot_tag).sens_plotted) && isfield(link_data,'rx_sensitivity_dbm') && ~isempty(link_data.rx_sensitivity_dbm) && isfinite(link_data.rx_sensitivity_dbm(1)) %
@@ -554,12 +555,13 @@ function visualization_model(config, tspi_data, processed_rf_data, terrain, simu
                  % axes(ax_dist); % LAXES warning ok %
 
                  % --- Plot 12: Distance & Rx Power vs Time (Combined Y-Axes, One Figure Per Receiver) ---
-% --- Plot 12: Distance & Rx Power vs Time (Combined Y-Axes, One Figure Per Receiver) ---
+
+                 % --- Plot 12: Distance & Rx Power vs Time (Combined Y-Axes, One Figure Per Receiver) ---
 dist_pwr_figname = ['DistPwr_' rx_id]; % Unique field name for this receiver's plot figure/handles %
 if ~isfield(figs_rf, dist_pwr_figname) % Initialize figure only once per unique receiver %
 figs_rf.(dist_pwr_figname) = figure(next_fig_num); clf; set(figs_rf.(dist_pwr_figname),'Name',['Dist/Pwr ' rx_id]); set_figure_style_helper_local(figs_rf.(dist_pwr_figname),theme,is_cyberpunk); next_fig_num=next_fig_num+1; % CALLS EXTERNAL HELPER %
 % Create left Y-axis for Distance
-ax_dist = axes('Parent', figs_rf.(dist_pwr_figname), 'YAxisLocation', 'left'); hold(ax_dist,'on'); grid on; set_axes_style_helper_local(ax_dist,theme,is_cyberpunk); ylabel(ax_dist,'Distance(km)','Color',theme.labelColor); xlabel(ax_dist,'Time(s)','Color',theme.labelColor); title(sprintf('Distance & Rx Power (%s)',strrep(rx_id,'_','-')),'Color',theme.titleColor); % CALLS EXTERNAL HELPER %
+ax_dist = axes('Parent', figs_rf.(dist_pwr_figname), 'YAxisLocation', 'left'); hold(ax_dist,'on'); grid(ax_dist,'on'); set_axes_style_helper_local(ax_dist,theme,is_cyberpunk); ylabel(ax_dist,'Distance(km)','Color',theme.labelColor); xlabel(ax_dist,'Time(s)','Color',theme.labelColor); title(sprintf('Distance & Rx Power (%s)',strrep(rx_id,'_','-')),'Color',theme.titleColor); % CALLS EXTERNAL HELPER %
 % Create right Y-axis for Power (overlay, transparent background)
 ax_pwr = axes('Parent', figs_rf.(dist_pwr_figname), 'Position', get(ax_dist,'Position'), 'YAxisLocation', 'right', 'Color','none'); hold(ax_pwr,'on'); set_axes_style_helper_local(ax_pwr,theme,is_cyberpunk); set(ax_pwr,'XGrid','off','YGrid','off','XTick',[]); ylabel(ax_pwr,'Rx Power(dBm)','Color',theme.labelColor); % Turn off grid/ticks for overlay % CALLS EXTERNAL HELPER %
 linkaxes([ax_dist, ax_pwr], 'x'); % Link X-axes %
@@ -651,12 +653,22 @@ end
 xlim(ax_dist, [time(1) time(end)]);
 
 % Set Y Limits for Distance (Left Axis)
-if isfinite(min_range) && isfinite(max_range)
-range_r = max_range - min_range; if range_r < 1, range_r = 1; end % Avoid zero range
-ylim(ax_dist, [min_range - 0.1*range_r, max_range + 0.1*range_r]);
+% if isfinite(min_range) && isfinite(max_range)
+% range_r = max_range - min_range; if range_r < 1, range_r = 1; end % Avoid zero range
+% ylim(ax_dist, [min_range - 0.1*range_r, max_range + 0.1*range_r]);
+% else
+% ylim(ax_dist, [0 1]); % Default if no valid data
+% end
+
+% Force bottom at –100 dBm and let top auto-scale
+% Determine top of power axis:
+if isfinite(max_power)
+    top_p = max_power + 0.1*(max_power + 100);  % e.g. 10% headroom above your max power reading
 else
-ylim(ax_dist, [0 1]); % Default if no valid data
+    top_p = 0;  % fallback if max_power isn’t a number
 end
+ylim(ax_pwr, [-100, top_p]);
+
 set(ax_dist, 'YColor', theme.labelColor); % Use theme color for axis
 
 % Set Y Limits for Power (Right Axis) - Include sensitivity in range
