@@ -129,8 +129,8 @@ fprintf('Initializing simulation models...\n');
 try
     earth      = earth_model(config.earth.model);              % WGS-84 etc.
     atmosphere = atmospheric_model(config.environment.MODEL); % Standard, Hot, Cold etc.
-    terrain    = terrain_model(config.terrain);              % Handles DEM loading/disabling
-
+    terrain    = terrain_model(config.terrain, earth);              % Handles DEM loading/disabling
+disp(isfield(terrain, 'earth'))
     % Load antenna patterns - result is a struct where fields are Tx IDs
     antennas   = antenna_model_loader(config.rf.transmitters, config.antenna); %
     % Initialize RF Propagation model object (contains compute_rf handle)

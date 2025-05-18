@@ -50,6 +50,14 @@ function config = config_settings()
     % Initialize the main configuration structure
     config = struct();
 
+    %SORT
+
+
+% Ground electrical properties
+config.rf.GROUND_PERMITTIVITY   = 15;     % dry soil
+config.rf.GROUND_CONDUCTIVITY   = 0.005;  % S/m
+config.rf.GROUND_SURFACE_ROUGHNESS = 0.02; %meters RMS height)
+config.rf.GROUND_DIVERGENCE_FACTOR = 1; 
     % =====================================================================
     % 1. Simulation Control & Timing
     %    Defines overall simulation run parameters.
@@ -57,7 +65,7 @@ function config = config_settings()
     config.simulation = struct();
 
     % Maximum duration the simulation will run for.
-    config.simulation.duration_s = 60 %60*60*2; % seconds (e.g., 1 hour)
+    config.simulation.duration_s = 60*60*2; % seconds (e.g., 1 hour)
 
     % Simulation time step. This is the fundamental interval at which the
     % aircraft state is updated. Smaller values increase fidelity (smoother
@@ -179,9 +187,9 @@ function config = config_settings()
     %     'roll_deg', 0 ...         % Initial Roll angle (degrees, +ve = right wing down)
     % );
     config.flight.initial_state = struct( ...
-        'lat_deg', 35.3, ...    % Latitude (degrees) - e.g., Santa Clarita approx
-        'lon_deg', -118, ... % Longitude (degrees) - e.g., Santa Clarita approx
-        'alt_ft_msl', 2000, ...   % Altitude (feet above Mean Sea Level)
+        'lat_deg', 34.970694, ...    % Latitude (degrees) - e.g., Santa Clarita approx
+        'lon_deg', -117.931, ... % Longitude (degrees) - e.g., Santa Clarita approx
+        'alt_ft_msl', 18000, ...   % Altitude (feet above Mean Sea Level)
         'heading_deg', 90, ...    % Initial Heading (degrees, 0=North, 90=East, 180=S, 270=W)
         'pitch_deg', 0, ...       % Initial Pitch angle (degrees, +ve = nose up)
         'roll_deg', 0 ...         % Initial Roll angle (degrees, +ve = right wing down)
@@ -203,9 +211,9 @@ function config = config_settings()
     % ];
     config.flight.waypoints = [ ...
         % Lat,   Lon,      Alt(ft), Spd(KCAS), HdgCmd, PitchCmd, RollCmd
-        35.64, -117.35,  15000,    250,          20,     NaN,      NaN;  % WP 1: Fly East
-        36.5739, -117.134, 15000,    250,          45,       NaN,       NaN;  % WP 2: Climb (+5deg), Turn Right (+15deg roll), Target Hdg 45
-        37.6556, -115.398, 15000,    250,         90,     NaN,      NaN;  % WP 3: Hold Alt, Turn Left (-15deg roll), Fly bearing to WP4
+        35.64, -117.35,  18000,    250,          20,     NaN,      NaN;  % WP 1: Fly East
+        36.5739, -117.134, 18000,    250,          45,       NaN,       NaN;  % WP 2: Climb (+5deg), Turn Right (+15deg roll), Target Hdg 45
+        37.6556, -115.398, 18000,    250,         90,     NaN,      NaN;  % WP 3: Hold Alt, Turn Left (-15deg roll), Fly bearing to WP4
         % Add more waypoints as needed for your scenario...
     ];
     % Arrival Radius: Distance (meters) from a waypoint's geographic coordinates
@@ -249,7 +257,7 @@ function config = config_settings()
     % Select atmospheric profile for density/temperature/pressure calculations.
     % Affects TAS calculation from KCAS and potentially atmospheric RF loss.
     % Options: 'standard', 'hot', 'cold', 'humid', 'conservative' (defines T0, P0, Lapse Rate).
-    config.environment.MODEL = 'standard';
+    config.environment.MODEL = 'humid';
 
     % --- Wind Conditions ---
     % Average steady wind speed.
@@ -297,7 +305,12 @@ function config = config_settings()
     % Interpolation method used by `terrain.get_altitude` for lookups between DEM grid points.
     % Options match `interp2`: 'nearest', 'linear', 'bilinear' (same as linear for 2D), 'cubic', 'spline'.
     % 'bilinear' (or 'linear') is usually a good balance of speed and accuracy.
-    config.terrain.INTERPOLATION_METHOD = 'linear';
+    config.terrain.INTERPOLATION_METHOD = 'nearest';
+
+        % Adaptive diffraction sampling
+config.terrain.DIFF_COARSE      = 200;    % coarse pass samples
+config.terrain.REFINE_WIN       = 0.10;   % ±10% window around each obstacle
+config.terrain.REFINE_COUNT     = 100;    % samples in each refine window
 
     % =====================================================================
     % 7. RF Propagation Settings
@@ -317,8 +330,8 @@ function config = config_settings()
         % 'power_dbw': Transmit power (dBW - Decibels relative to 1 Watt).
         % 'antenna_pattern_file': Path to CSV antenna gain pattern file (Gain in dBi assumed). Set to '' or leave field out for default omni.
         % 'offset_body_m': [X, Y, Z] position relative to aircraft CG (meters) in Body Frame (X-fwd, Y-right, Z-down).
-        struct('id', 'C_Band_TX', 'freq_hz', 5.1e9, 'power_dbw', 10, 'antenna_pattern_file', 'data/antenna_patterns/c_band_pattern.csv', 'offset_body_m', [0, 0, -0.5]), ...
-        struct('id', 'S_Band_TX', 'freq_hz', 2.4e9, 'power_dbw', 5, 'antenna_pattern_file', 'data/antenna_patterns/s_band_pattern.csv', 'offset_body_m', [0.5, 0, -0.5]) ...
+        %struct('id', 'C_Band_TX', 'freq_hz', 5.1e9, 'power_dbw', 10, 'antenna_pattern_file', 'data/antenna_patterns/c_band_pattern.csv', 'offset_body_m', [0, 0, -0.5]), ...
+        struct('id', 'S_Band_TX', 'freq_hz', 2.4e9, 'power_dbw', 13.01, 'other_loss_db', -8.04, 'antenna_pattern_file', 'data/antenna_patterns/s_band_pattern.csv', 'offset_body_m', [0.5, 0, -0.5]) ...
         % Add more transmitters here if needed...
         % struct('id', 'X_Band_TX', 'freq_hz', 10e9, 'power_dbw', 15, 'antenna_pattern_file', '', 'offset_body_m', [0, 0.5, -0.5]) % Example Omni X-Band
     };
@@ -332,8 +345,11 @@ function config = config_settings()
         % 'sensitivity_dbm': Minimum received signal power threshold (dBm) for successful link.
         % 'bandwidth_hz': Receiver bandwidth (Hz). CRITICAL for noise power and capacity calculations.
         % 'supported_tx_ids': ** NEW ** Cell array {'TxID1', 'TxID2'} specifying which transmitter IDs this receiver can process.
-        struct('id', 'GS1_SBand_Only', 'lat_deg', 35.64, 'lon_deg', -117.35, 'alt_m_msl', 2982.598, 'rx_gain_dbi', 20, 'sensitivity_dbm', -95, 'bandwidth_hz', 5e6, 'supported_tx_ids', {{'S_Band_TX'}}), ... % Listens ONLY to S_Band_TX
-        struct('id', 'GS2_CBand_Only', 'lat_deg', 36.5739, 'lon_deg', -117.134, 'alt_m_msl', 4977.349, 'rx_gain_dbi', 25, 'sensitivity_dbm', -100, 'bandwidth_hz', 10e6, 'supported_tx_ids', {{'C_Band_TX'}}) ... % Listens ONLY to C_Band_TX
+        %struct('id', 'GS1_SBand_Only', 'lat_deg', 35.64, 'lon_deg', -117.35, 'alt_m_msl', 2982.598, 'rx_gain_dbi', 20, 'sensitivity_dbm', -95, 'bandwidth_hz', 5e6, 'supported_tx_ids', {{'S_Band_TX'}}), ... % Listens ONLY to S_Band_TX
+        %struct('id', 'GS2_CBand_Only', 'lat_deg', 36.5739, 'lon_deg', -117.134, 'alt_m_msl', 4977.349, 'rx_gain_dbi', 25, 'sensitivity_dbm', -100, 'bandwidth_hz', 10e6, 'supported_tx_ids', {{'C_Band_TX'}}) ... % Listens ONLY to C_Band_TX
+        struct('id', 'GS1', 'lat_deg', 34.970694, 'lon_deg', -117.931, 'alt_m_msl', 832, 'rx_gain_dbi', 31, 'sensitivity_dbm', -64.53, 'rx_lna_gain_db', 30, 'rx_loss_db', -5, 'bandwidth_hz', 1e6, 'supported_tx_ids', {{'S_Band_TX'}}), ... % Listens ONLY to S_Band_TX
+        struct('id', 'GS2', 'lat_deg', 36.0765, 'lon_deg', -117.475666, 'alt_m_msl', 2480, 'rx_gain_dbi', 31, 'sensitivity_dbm', -64.53, 'rx_lna_gain_db', 30, 'rx_loss_db', -5,'bandwidth_hz', 1e6, 'supported_tx_ids', {{'S_Band_TX'}}), ... % Listens ONLY to S_Band_TX
+        struct('id', 'GS3', 'lat_deg', 37.283555, 'lon_deg', -116.645833, 'alt_m_msl', 2207, 'rx_gain_dbi', 31, 'sensitivity_dbm', -64.53, 'rx_lna_gain_db', 30, 'rx_loss_db', -5,'bandwidth_hz', 1e6, 'supported_tx_ids', {{'S_Band_TX'}}), ... % Listens ONLY to S_Band_TX
         % Add more ground stations here if needed...
         % struct('id', 'GS3_MultiBand', 'lat_deg', 34.60, 'lon_deg', -118.35, 'alt_m_msl', 400, 'rx_gain_dbi', 22, 'sensitivity_dbm', -98, 'bandwidth_hz', 8e6, 'supported_tx_ids', {{'S_Band_TX', 'X_Band_TX'}}) % Example listens to S & X
     };
@@ -343,10 +359,10 @@ function config = config_settings()
     config.rf.default_bandwidth_hz = 1e6; % 1 MHz
 
     % Receiver noise figure (dB). Represents noise added by the receiver itself. Higher value = noisier receiver.
-    config.rf.noise_figure_db = 5.0;
+    config.rf.noise_figure_db = 2.55;
 
     % System noise temperature (Kelvin). Used for calculating thermal noise floor (kTB). 290K is a standard ambient assumption.
-    config.rf.noise_temperature_k = 290.0;
+    config.rf.noise_temperature_k = 231.15;
 
     % --- RF Loss Model Selection ---
     % Select model for atmospheric gas absorption loss.
@@ -387,16 +403,17 @@ function config = config_settings()
 config.rf.pointing_error_std_dev_az_deg= 1.0;  % e.g. 1° std dev
 config.rf.pointing_error_std_dev_el_deg= 0.5;  % e.g. 0.5° std dev
 
+    config.rf.ENABLE_MANUAL_CALCS = false;
 config.rf.ENABLE_GAS_LOSS             = true;
 config.rf.ENABLE_RAIN_LOSS            = false;
 config.rf.ENABLE_FOG_CLOUD_LOSS       = false;
-config.rf.ENABLE_FRESNEL_LOSS         = true;
-config.rf.ENABLE_XPD_LOSS             = true;
-config.rf.ENABLE_GROUND_BOUNCE        = true;
+config.rf.ENABLE_FRESNEL_LOSS         = false;
+config.rf.ENABLE_XPD_LOSS             = false;
+    config.rf.ENABLE_GROUND_BOUNCE        = false;
 config.rf.ENABLE_IONOSPHERIC_EFFECTS  = false;
 config.rf.ENABLE_TROPO_DUCTING        = false;
-config.rf.ENABLE_TERRAIN_DIFFRACTION  = false;
-config.rf.ENABLE_MULTIPATH_FADING     = true;
+    config.rf.ENABLE_TERRAIN_DIFFRACTION  = false;
+config.rf.ENABLE_MULTIPATH_FADING     = false;
 config.rf.MULTIPATH_FADING_MODEL      = 'ricean';  % or 'rayleigh'
 config.rf.RICEAN_K_FACTOR             = 6;         % dB
 config.rf.ENABLE_SUMMARY_LOGGING      = true;
@@ -410,12 +427,71 @@ config.rf.ENABLE_ADAPTIVE_MODULATION  = true;
 config.rf.ENABLE_BER_SER_ESTIMATION   = true;
 config.rf.ENABLE_SHANNON_CAPACITY     = true;
 
+
+% Ground electrical properties
+config.rf.GROUND_PERMITTIVITY   = 15;     % dry soil
+config.rf.GROUND_CONDUCTIVITY   = 0.005;  % S/m
+config.rf.GROUND_POLARIZATION = 'circular'; 
+config.rf.GROUND_BOUNCE_CAP_DB = 30; %db
+ % =================================================================
+    % 8A. Adaptive Modulation Schemes & BER Curves (High Fidelity)
+    % =================================================================
+    config.modulation = struct();
+    % Schemes sorted from highest to lowest data rate:
+    config.modulation.schemes = [ ...
+      % 1) SOQPSK-TG @10 Mb/s (Tier I spec: –89 dBm @1e-5)
+      struct( ...
+        'name',           'SOQPSK-TG', ...
+        'min_snr_db',     12.5,           ...  % ≥10 dB for BER≈1e-5 @10 Mb/s
+        'data_rate_mbps', 6.5,           ...  % 10 Mb/s
+        'ber_snr_curve', [ ...                % [SNR_dB,   BER]
+           -2,  1e-1;    % very poor SNR → BER≈1e-1
+            0,  1e-2;    % at  0 dB → BER≈1e-2
+            5,  1e-4;    % at  5 dB → BER≈1e-4
+           10,  1e-5;    % at 10 dB → BER≈1e-5 (Tier I spec)
+           12,  1e-6;    % at 12 dB → BER≈1e-6
+           15,  1e-7     % at 15 dB → BER≈1e-7
+        ] ...
+      ), ...
+
+    %   % 2) QPSK @5 Mb/s
+    %   struct( ...
+    %     'name',           'QPSK', ...
+    %     'min_snr_db',     8,            ...  % ≥8 dB for BER≈1e-5 @5 Mb/s
+    %     'data_rate_mbps', 5,            ...  % 5 Mb/s
+    %     'ber_snr_curve', [ ...
+    %        -2,  1e-1;
+    %         0,  1e-3;
+    %         5,  1e-4;
+    %         8,  1e-5;
+    %        10,  1e-6;
+    %        12,  1e-7
+    %     ] ...
+    %   ), ...
+    % 
+    %   % 3) BPSK @2 Mb/s
+    %   struct( ...
+    %     'name',           'BPSK', ...
+    %     'min_snr_db',     6,            ...  % ≥6 dB for BER≈1e-5 @2 Mb/s
+    %     'data_rate_mbps', 2,            ...  % 2 Mb/s
+    %     'ber_snr_curve', [ ...
+    %        -2,  1e-1;
+    %         0,  1e-2;
+    %         3,  1e-4;
+    %         6,  1e-5;
+    %         8,  1e-6;
+    %        10,  1e-7
+    %     ] ...
+    %   ) ...
+    ];
+
 % ...
 % Possibly in environment:
-config.environment.pressure_hPa       = 1013.25;
+
 config.environment.temperature_K       = 290;
 config.environment.humidity_pct       = 50;
-config.environment.rain_rate_mm_per_hr= 1.0; % light rain
+config.environment.rain_rate_mm_per_hr= 0.0; % light rain
+config.environment.pressure_hPa = 1013.25;
 
     % =====================================================================
     % 8. Antenna Settings
@@ -439,7 +515,7 @@ config.environment.rain_rate_mm_per_hr= 1.0; % light rain
     config.masking = struct();
 
     % Master toggle for enabling checks for LOS blockage by the aircraft body itself.
-    config.masking.ENABLE_AIRCRAFT_MASKING = true;
+    config.masking.ENABLE_AIRCRAFT_MASKING = false;
 
     % Method used for aircraft masking check:
     % 'none'      - No masking applied. LOS always clear w.r.t. aircraft body.
