@@ -60,7 +60,7 @@
 %   - Added checks for required model object validity.
 %   - Improved comments and formatting.
 %
-% Maintainer: [Your Name/Team] / Gemini Assistance
+% Maintainer: [Your Name/Team] 
 % Last Updated: 2025-04-05 - Added TSPI filtering post-loop.
 % =========================================================================
 function [tspi_data, rf_log_cell, failure_log_cell, simulation_metadata] = aircraft_dynamics_model(config, earth, atmosphere, terrain, antennas)

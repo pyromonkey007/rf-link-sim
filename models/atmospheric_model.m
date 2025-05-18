@@ -68,7 +68,7 @@ function atmosphere_obj = atmospheric_model(model_type)
             T0 = T0_isa - 15; P0 = P0_isa; L = L_isa; H_tropo = H_tropo_isa; % Assume standard pressure/lapse/tropo
         case 'humid'    % Placeholder: Uses Standard T/P for calculations here.
             T0 = T0_isa; P0 = P0_isa; L = L_isa; H_tropo = H_tropo_isa;
-            atmos.relative_humidity_percent = 70; % Store humidity value (e.g., for external use in RF loss)
+            atmos.relative_humidity_percent = 37; % Store humidity value (e.g., for external use in RF loss)
         case 'conservative' % Example Conservative: ISA + 5°C
             T0 = T0_isa + 5; P0 = P0_isa; L = L_isa; H_tropo = H_tropo_isa; % Assume standard pressure/lapse/tropo
         otherwise
@@ -96,6 +96,7 @@ function atmosphere_obj = atmospheric_model(model_type)
     atmosphere_obj.get_density    = @(alt_m) get_conditions_local(atmos, alt_m).density_kg_m3;
     atmosphere_obj.get_temperature= @(alt_m) get_conditions_local(atmos, alt_m).temperature_k;
     atmosphere_obj.get_pressure   = @(alt_m) get_conditions_local(atmos, alt_m).pressure_pa;
+    atmosphere_obj.get_rho_w      = @(alt_m) get_conditions_local(atmos, alt_m).rho_w;
     % Airspeed conversions:
     atmosphere_obj.kcas_to_tas    = @(kcas, alt_m) kcas_to_tas_local(atmos, kcas, alt_m);
     atmosphere_obj.tas_to_kcas    = @(tas_mps, alt_m) tas_to_kcas_local(atmos, tas_mps, alt_m); % Placeholder!
@@ -124,7 +125,7 @@ function conditions = get_conditions_local(atmos, altitude_m_msl)
     %   conditions     - Structure containing: .temperature_k, .pressure_pa, .density_kg_m3
 
     % Initialize outputs
-    temperature_k = NaN; pressure_pa = NaN; density_kg_m3 = NaN;
+    temperature_k = NaN; pressure_pa = NaN; density_kg_m3 = NaN; rho_w = NaN;
 
     try
         % Ensure altitude is not negative for calculations.
@@ -174,24 +175,28 @@ function conditions = get_conditions_local(atmos, altitude_m_msl)
             
             % Adjust total air density by adding vapor density
             density_kg_m3 = (pressure_pa / (atmos.R_specific * temperature_k)) + rho_vapor;
+            rho_w = rho_vapor*100000;
         else
             % --- Density Calculation for Non-Humid Air ---
             density_kg_m3 = pressure_pa / (atmos.R_specific * temperature_k);
+            rho_w = 0;
         end
 
         % Enforce physical lower limit
         density_kg_m3 = max(density_kg_m3, 1e-5);
 
+
     catch ME_cond % Catch any errors during calculation
         warning('Error calculating atmospheric conditions at %.1f m: %s. Returning NaNs.', altitude_m_msl, ME_cond.message);
-        temperature_k = NaN; pressure_pa = NaN; density_kg_m3 = NaN;
+        temperature_k = NaN; pressure_pa = NaN; density_kg_m3 = NaN; rho_w = NaN;
     end
 
     % Return results in a structure
     conditions = struct(...
         'temperature_k', temperature_k, ...
         'pressure_pa',   pressure_pa, ...
-        'density_kg_m3', density_kg_m3 ...
+        'density_kg_m3', density_kg_m3, ...
+        'rho_w', rho_w ...
     );
 end
 
